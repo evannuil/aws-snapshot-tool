@@ -2,7 +2,7 @@
 #
 # (c) 2012 E.M. van Nuil / Oblivion b.v.
 #
-# makesnapshots.py version 1.5.1
+# makesnapshots.py version 1.6
 #
 # Changelog
 # version 1:   Initial version
@@ -13,11 +13,7 @@
 # version 1.4: Moved all settings to config file
 # version 1.5: Select volumes for snapshotting depending on Tag and not from config file
 # version 1.5.1: Added proxyHost and proxyPort to config and connect
-#
-# Change the logging filename for the location of the logfile
-# Change aws_access_key and aws_secret_key for the owner of the volumes
-# Change the path to the volumes.cfg to include complete path (for running from cron)
-#
+# version 1.6: Public release
 
 from boto.ec2.connection import EC2Connection
 from boto.ec2.regioninfo import RegionInfo
@@ -36,7 +32,7 @@ start_message = 'Start making snapshots at ' + datetime.today().isoformat(' ')
 message += start_message + "\n" + "\n"
 logging.info(start_message)
 
-# Substitute your access key and secret key here
+# Get settings from config.py
 aws_access_key = config['aws_access_key']
 aws_secret_key = config['aws_secret_key']
 ec2_region_name = config['ec2_region_name']
