@@ -54,10 +54,12 @@ count_succes = 0
 count_total = 0
 
 # Connect to AWS using the credentials provided above or in Environment vars.
-# non proxy:
-# conn = EC2Connection(aws_access_key,aws_secret_key,region=region)
-# proxy:
-conn = EC2Connection(aws_access_key,aws_secret_key,region=region,proxy=proxyHost, proxy_port=proxyPort)
+if proxyHost == '':
+	# non proxy:
+	conn = EC2Connection(aws_access_key,aws_secret_key,region=region)
+else:
+	# proxy:
+	conn = EC2Connection(aws_access_key,aws_secret_key,region=region,proxy=proxyHost, proxy_port=proxyPort)
 
 # Connect to SNS
 # non proxy:
