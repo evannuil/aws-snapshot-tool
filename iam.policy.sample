@@ -1,0 +1,32 @@
+{
+  "Statement": [
+	{
+	  "Sid": "Stmtxxxxxxxxxx",
+	  "Action": [
+		"sns:Publish"
+	  ],
+	  "Effect": "Allow",
+	  "Resource": [
+		"arn:aws:sns:eu-west-1:6589692723xx:xxxxxxxxx"
+	  ]
+	},
+	{
+	  "Sid": "Stmtxxxxxxxxxxxxxx",
+	  "Action": [
+		"ec2:CreateSnapshot",
+		"ec2:CreateTags",
+		"ec2:DeleteSnapshot",
+		"ec2:DescribeAvailabilityZones",
+		"ec2:DescribeSnapshots",
+		"ec2:DescribeTags",
+		"ec2:DescribeVolumeAttribute",
+		"ec2:DescribeVolumeStatus",
+		"ec2:DescribeVolumes"
+	  ],
+	  "Effect": "Allow",
+	  "Resource": [
+		"*"
+	  ]
+	}
+  ]
+}
