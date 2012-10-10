@@ -8,43 +8,4 @@ The access_key and secret_key can be provided as environment vars or put in the 
 For the SNS functionality there must be a topic and the ARN of the topic must be in the config.
 
 
-The user that executes the script needs the following policies:
-
-
- {
-   "Statement": [
- 	{
- 	  "Sid": "Stmt1343909064218",
- 	  "Action": [
- 		"sns:Publish"
- 	  ],
- 	  "Effect": "Allow",
- 	  "Resource": [
- 		"arn:aws:sns:eu-west-1:xxxxxxxxx:yyyyyyy"
- 	  ]
- 	}
-   ]
- }
-
- {
-   "Statement": [
- 	{
- 	  "Sid": "Stmt1343913145933",
- 	  "Action": [
- 		"ec2:CreateSnapshot",
- 		"ec2:CreateTags",
- 		"ec2:DeleteSnapshot",
- 		"ec2:DescribeAvailabilityZones",
- 		"ec2:DescribeSnapshots",
- 		"ec2:DescribeTags",
- 		"ec2:DescribeVolumeAttribute",
- 		"ec2:DescribeVolumeStatus",
- 		"ec2:DescribeVolumes"
- 	  ],
- 	  "Effect": "Allow",
- 	  "Resource": [
- 		"*"
- 	  ]
- 	}
-   ]
- }
+The user that executes the script needs the following policies: see iam.policy.sample
