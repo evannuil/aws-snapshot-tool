@@ -2,7 +2,7 @@
 #
 # (c) 2012 E.M. van Nuil / Oblivion b.v.
 #
-# makesnapshots.py version 1.6
+# makesnapshots.py version 2.0
 #
 # Changelog
 # version 1:   Initial version
@@ -14,6 +14,7 @@
 # version 1.5: Select volumes for snapshotting depending on Tag and not from config file
 # version 1.5.1: Added proxyHost and proxyPort to config and connect
 # version 1.6: Public release
+# version 2.0: Added daily, weekly and montly retention
 
 from boto.ec2.connection import EC2Connection
 from boto.ec2.regioninfo import RegionInfo
@@ -22,6 +23,20 @@ from datetime import datetime
 import sys
 import logging
 from config import config
+
+if (len(sys.argv) < 2):
+	print('Please use the parameter day, week or month')
+	quit()
+else:
+	if sys.argv[1]=='day':
+		run = 'day'
+	elif sys.argv[1]=='week':
+		run = 'week'
+	elif sys.argv[1]=='month':
+		run = 'month'
+	else:
+		print('Please use the parameter day, week or month')
+		quit()
 
 # Message to return result via SNS
 message = ""
@@ -72,7 +87,7 @@ for vol in vols:
 	try:
 		count_total += 1		
 		logging.info(vol)
-		description = 'Snapshot ' + vol.id + ' by snapshot script at ' + datetime.today().isoformat(' ')
+		description = run + ' snapshot ' + vol.id + ' by snapshot script at ' + datetime.today().isoformat(' ')
 		if vol.create_snapshot(description):
 			suc_message = 'Snapshot created with description: ' + description
 			message += suc_message + "\n"
@@ -81,22 +96,26 @@ for vol in vols:
 		snapshot = snapshots[0]
 		for snap in snapshots:
 			logging.info(snap)
-		def date_compare(snap1, snap2):
-			if snap1.start_time < snap2.start_time:
-				return -1
-			elif snap1.start_time == snap2.start_time:
-				return 0
-			return 1
-		snapshots.sort(date_compare)
-		delta = len(snapshots) - keep
-		for i in range(delta):
-			del_message = 'Deleting snapshot ' + snapshots[i].description
-			message += del_message + "\n"
-			logging.info(del_message)
-			if snapshots[i].description.startswith('Created by CreateImage'):
-				print("Skip")
-			else:
-				snapshots[i].delete()
+		if run=='day':
+			def date_compare(snap1, snap2):
+				if snap1.start_time < snap2.start_time:
+					return -1
+				elif snap1.start_time == snap2.start_time:
+					return 0
+				return 1
+			snapshots.sort(date_compare)
+			for snap in snapshots:
+				if (snap.description.startswith('week') or snap.description.startswith('month')):
+					snapshots.remove(snap)
+			delta = len(snapshots) - keep
+			for i in range(delta):
+				del_message = 'Deleting snapshot ' + snapshots[i].description
+				message += del_message + "\n"
+				logging.info(del_message)
+				if snapshots[i].description.startswith('Created by CreateImage'):
+					print("Skip")
+				else:
+					snapshots[i].delete()
 	except:
 		print("Unexpected error:", sys.exc_info()[0])
 		logging.error('Error in processing volume with id: ' + vol.id)
