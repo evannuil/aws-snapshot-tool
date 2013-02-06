@@ -6,7 +6,9 @@ config = {
 	'arn':	'xxxxxxxxxx',
 	'tag_name': 'tag:MakeSnapshot',
 	'tag_value':	'True',
-	'keep': 5,
+	'keep_day': 5,
+	'keep_week': 5,
+	'keep_month': 11,
 	'log_file': '/tmp/makesnapshots.log',
 	'proxyHost':    '10.100.x.y',
 	'proxyPort':    '8080'

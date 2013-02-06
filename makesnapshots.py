@@ -1,8 +1,8 @@
 #!/usr/bin/python
 #
-# (c) 2012 E.M. van Nuil / Oblivion b.v.
+# (c) 2012/2013 E.M. van Nuil / Oblivion b.v.
 #
-# makesnapshots.py version 2.0
+# makesnapshots.py version 3.0
 #
 # Changelog
 # version 1:   Initial version
@@ -15,6 +15,7 @@
 # version 1.5.1: Added proxyHost and proxyPort to config and connect
 # version 1.6: Public release
 # version 2.0: Added daily, weekly and montly retention
+# version 3.0: Rewrote deleting functions, changed description
 
 from boto.ec2.connection import EC2Connection
 from boto.ec2.regioninfo import RegionInfo
@@ -25,15 +26,18 @@ import logging
 from config import config
 
 if (len(sys.argv) < 2):
-	print('Please use the parameter day, week or month')
+	print('Please use the parameter day, week or month.')
 	quit()
 else:
 	if sys.argv[1]=='day':
 		run = 'day'
+		date_suffix = datetime.today().strftime('%a')
 	elif sys.argv[1]=='week':
 		run = 'week'
+		date_suffix = datetime.today().strftime('%U')
 	elif sys.argv[1]=='month':
 		run = 'month'
+		date_suffix = datetime.today().strftime('%b')
 	else:
 		print('Please use the parameter day, week or month')
 		quit()
@@ -41,9 +45,16 @@ else:
 # Message to return result via SNS
 message = ""
 
+# Counters
+total_creates = 0
+total_deletes = 0
+
+# List with snapshots to delete
+deletelist = []
+
 # Setup the logging
 logging.basicConfig(filename=config['log_file'], level=logging.INFO)
-start_message = 'Start making snapshots at ' + datetime.today().isoformat(' ')
+start_message = 'Start making ' + run + ' snapshots at ' + datetime.today().strftime('%d-%m-%Y %H:%M:%S')
 message += start_message + "\n" + "\n"
 logging.info(start_message)
 
@@ -60,7 +71,9 @@ proxyPort = config['proxyPort']
 region = RegionInfo(name=ec2_region_name, endpoint=ec2_region_endpoint)
 
 # Number of snapshots to keep
-keep = config['keep']
+keep_week = config['keep_week']
+keep_day = config['keep_day']
+keep_month = config['keep_month']
 count_succes = 0
 count_total = 0
 
@@ -87,35 +100,49 @@ for vol in vols:
 	try:
 		count_total += 1		
 		logging.info(vol)
-		description = run + ' snapshot ' + vol.id + ' by snapshot script at ' + datetime.today().isoformat(' ')
+		print vol
+		description = run + '_snapshot ' + vol.id + '_' + run + '_' + date_suffix + ' by snapshot script at ' + datetime.today().strftime('%d-%m-%Y %H:%M:%S')
 		if vol.create_snapshot(description):
 			suc_message = 'Snapshot created with description: ' + description
-			message += suc_message + "\n"
+			print suc_message
 			logging.info(suc_message)
+			total_creates += 1
 		snapshots = vol.snapshots()
-		snapshot = snapshots[0]
 		for snap in snapshots:
+			sndesc = snap.description
+			if (sndesc.startswith('week_snapshot') and run == 'week'):
+				deletelist.append(snap)
+			elif (sndesc.startswith('day_snapshot') and run == 'day'):
+				deletelist.append(snap)
+			elif (sndesc.startswith('month_snapshot') and run == 'month'):
+				deletelist.append(snap)
+			else:
+				print 'Skipping, not added to deletelist: ' + sndesc
+		for snap in deletelist:
 			logging.info(snap)
+			logging.info(snap.start_time)
+			print snap.description
+
+		def date_compare(snap1, snap2):
+			if snap1.start_time < snap2.start_time:
+				return -1
+			elif snap1.start_time == snap2.start_time:
+				return 0
+			return 1
+
+		deletelist.sort(date_compare)
 		if run=='day':
-			def date_compare(snap1, snap2):
-				if snap1.start_time < snap2.start_time:
-					return -1
-				elif snap1.start_time == snap2.start_time:
-					return 0
-				return 1
-			snapshots.sort(date_compare)
-			for snap in snapshots:
-				if (snap.description.startswith('week') or snap.description.startswith('month')):
-					snapshots.remove(snap)
-			delta = len(snapshots) - keep
-			for i in range(delta):
-				del_message = 'Deleting snapshot ' + snapshots[i].description
-				message += del_message + "\n"
-				logging.info(del_message)
-				if snapshots[i].description.startswith('Created by CreateImage'):
-					print("Skip")
-				else:
-					snapshots[i].delete()
+			keep = keep_day
+		elif run=='week':
+			keep = keep_week
+		elif run=='month':
+			keep = keep_month
+		delta = len(deletelist) - keep
+		for i in range(delta):
+			del_message = 'Deleting snapshot ' + deletelist[i].description
+			logging.info(del_message)
+			deletelist[i].delete()
+			total_deletes += 1
 	except:
 		print("Unexpected error:", sys.exc_info()[0])
 		logging.error('Error in processing volume with id: ' + vol.id)
@@ -123,8 +150,10 @@ for vol in vols:
 	else:
 		count_succes +=1
 
-result= 'Finished making snapshots at ' + datetime.today().isoformat(' ') + ' with ' + str(count_succes) + ' snapshots of ' + str(count_total) + ' possible.'
+result= '\nFinished making snapshots at ' + datetime.today().strftime('%d-%m-%Y %H:%M:%S') + ' with ' + str(count_succes) + ' snapshots of ' + str(count_total) + ' possible.'
 message += "\n" + "\n" + result
+message += "\nTotal snapshots created: " + str(total_creates)
+message += "\nTotal snapshots deleted: " + str(total_deletes) + "\n"
 print result
 sns.publish(arn,message,'Finished AWS snapshotting')
 logging.info(result)
