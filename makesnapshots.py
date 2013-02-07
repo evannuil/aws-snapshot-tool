@@ -2,7 +2,7 @@
 #
 # (c) 2012/2013 E.M. van Nuil / Oblivion b.v.
 #
-# makesnapshots.py version 3.0
+# makesnapshots.py version 3.1
 #
 # Changelog
 # version 1:   Initial version
@@ -16,11 +16,13 @@
 # version 1.6: Public release
 # version 2.0: Added daily, weekly and montly retention
 # version 3.0: Rewrote deleting functions, changed description
+# version 3.1: Fix a bug with the deletelist and added a pause in the volume loop
 
 from boto.ec2.connection import EC2Connection
 from boto.ec2.regioninfo import RegionInfo
 import boto.sns
 from datetime import datetime
+import time
 import sys
 import logging
 from config import config
@@ -44,10 +46,12 @@ else:
 
 # Message to return result via SNS
 message = ""
+errmsg = ""
 
 # Counters
 total_creates = 0
 total_deletes = 0
+count_errors = 0
 
 # List with snapshots to delete
 deletelist = []
@@ -104,10 +108,11 @@ for vol in vols:
 		description = run + '_snapshot ' + vol.id + '_' + run + '_' + date_suffix + ' by snapshot script at ' + datetime.today().strftime('%d-%m-%Y %H:%M:%S')
 		if vol.create_snapshot(description):
 			suc_message = 'Snapshot created with description: ' + description
-			print suc_message
+			print '     ' + suc_message
 			logging.info(suc_message)
 			total_creates += 1
 		snapshots = vol.snapshots()
+		deletelist = []
 		for snap in snapshots:
 			sndesc = snap.description
 			if (sndesc.startswith('week_snapshot') and run == 'week'):
@@ -117,11 +122,11 @@ for vol in vols:
 			elif (sndesc.startswith('month_snapshot') and run == 'month'):
 				deletelist.append(snap)
 			else:
-				print 'Skipping, not added to deletelist: ' + sndesc
+				print '     Skipping, not added to deletelist: ' + sndesc
 		for snap in deletelist:
 			logging.info(snap)
 			logging.info(snap.start_time)
-			print snap.description
+			print '     Snapshots matching vol/run: ' + snap.description
 
 		def date_compare(snap1, snap2):
 			if snap1.start_time < snap2.start_time:
@@ -139,21 +144,30 @@ for vol in vols:
 			keep = keep_month
 		delta = len(deletelist) - keep
 		for i in range(delta):
-			del_message = 'Deleting snapshot ' + deletelist[i].description
+			del_message = '     Deleting snapshot ' + deletelist[i].description
+			print del_message
 			logging.info(del_message)
 			deletelist[i].delete()
 			total_deletes += 1
+		time.sleep(3)
 	except:
 		print("Unexpected error:", sys.exc_info()[0])
 		logging.error('Error in processing volume with id: ' + vol.id)
-		sns.publish(arn,'Error in processing volume with id: ' + vol.id,'Error with AWS Snapshot')
+		errmsg += 'Error in processing volume with id: ' + vol.id
+		count_errors +=1
 	else:
 		count_succes +=1
 
 result= '\nFinished making snapshots at ' + datetime.today().strftime('%d-%m-%Y %H:%M:%S') + ' with ' + str(count_succes) + ' snapshots of ' + str(count_total) + ' possible.'
 message += "\n" + "\n" + result
 message += "\nTotal snapshots created: " + str(total_creates)
+message += "\nTotal snapshots errors: " + str(count_errors)
 message += "\nTotal snapshots deleted: " + str(total_deletes) + "\n"
+print '\n' + message + '\n'
 print result
+
+#Reporting
+if not errmsg == "":
+	sns.publish(arn,'Error in processing volumes: ' + errmsg,'Error with AWS Snapshot') 
 sns.publish(arn,message,'Finished AWS snapshotting')
 logging.info(result)
