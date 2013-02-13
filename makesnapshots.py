@@ -100,7 +100,6 @@ else:
 
 vols = conn.get_all_volumes(filters={config['tag_name']: config['tag_value']})
 for vol in vols:
-	message += "\n"
 	try:
 		count_total += 1		
 		logging.info(vol)
