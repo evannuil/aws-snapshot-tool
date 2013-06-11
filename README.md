@@ -18,11 +18,11 @@ Usage
 4. Create a snapshot user in IAM and put the key and secret in the config file
 5. Create a security policy for this user (see the iam.policy.sample)
 6. Copy config.sample to config.py
-6. Decide how many versions of the snapshots you want and change this in config.py (default: 5)
-7. Change the Region and Endpoint for AWS in the config.py file
-8. Optionally specify a proxy if you need to, otherwise set it to '' in the config.py
-9. Give every Volume for which you want snapshots a Tag with a Key and a Value and put these in the config file. Default: "MakeSnapshot" and the value "True"
-10. Install the script in the cron: 
+7. Decide how many versions of the snapshots you want for day/week/month and change this in config.py
+8. Change the Region and Endpoint for AWS in the config.py file
+9. Optionally specify a proxy if you need to, otherwise set it to '' in the config.py
+10. Give every Volume for which you want snapshots a Tag with a Key and a Value and put these in the config file. Default: "MakeSnapshot" and the value "True"
+11. Install the script in the cron: 
 
 		# chmod +x makesnapshots.py
 		# crontab -e
