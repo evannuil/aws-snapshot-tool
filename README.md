@@ -6,9 +6,9 @@ Simply add a tag to each volume you want snapshots of, configure and install a c
 
 Features:
 - *Python based*: Leverages boto and is easy to configure and install as a crontab
-- *Simple tag system*: Just add a tag to each of your EBS volumes you want backed up
+- *Simple tag system*: Just add a tag to each of your EBS volumes you want snapshots of
 - *Configure retention policy*: Configure how many days, weeks, and month snapshots you want to retain
-- *SNS Notifications*: aws-snapshot-tool works with Amazon SNS our of the box, so you can be notified of backups
+- *SNS Notifications*: aws-snapshot-tool works with Amazon SNS our of the box, so you can be notified of snapshots
 
 Usage
 ==========
