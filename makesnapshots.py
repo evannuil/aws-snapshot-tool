@@ -67,7 +67,6 @@ aws_access_key = config['aws_access_key']
 aws_secret_key = config['aws_secret_key']
 ec2_region_name = config['ec2_region_name']
 ec2_region_endpoint = config['ec2_region_endpoint']
-sns_region = boto.sns.get_region(ec2_region_name)
 arn= config['arn']
 proxyHost = config['proxyHost']
 proxyPort = config['proxyPort']
@@ -92,10 +91,10 @@ else:
 # Connect to SNS
 if proxyHost == '':
 	# non proxy:
-	sns = boto.connect_sns(aws_access_key,aws_secret_key,region=sns_region)
+	sns = boto.sns.connect_to_region(ec2_region_name,aws_access_key_id=aws_access_key,aws_secret_access_key=aws_secret_key)
 else:
 	# proxy:
-	sns = boto.connect_sns(aws_access_key,aws_secret_key,region=sns_region,proxy=proxyHost, proxy_port=proxyPort)
+	sns = boto.sns.connect_to_region(ec2_region_name,aws_access_key_id=aws_access_key,aws_secret_access_key=aws_secret_key,proxy=proxyHost, proxy_port=proxyPort)
 
 
 vols = conn.get_all_volumes(filters={config['tag_name']: config['tag_value']})
