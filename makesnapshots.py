@@ -25,24 +25,13 @@ from datetime import datetime
 import time
 import sys
 import logging
+import argparse
 from config import config
 
-if (len(sys.argv) < 2):
-    print('Please use the parameter day, week or month.')
-    quit()
-else:
-    if sys.argv[1] == 'day':
-        run = 'day'
-        date_suffix = datetime.today().strftime('%a')
-    elif sys.argv[1] == 'week':
-        run = 'week'
-        date_suffix = datetime.today().strftime('%U')
-    elif sys.argv[1] == 'month':
-        run = 'month'
-        date_suffix = datetime.today().strftime('%b')
-    else:
-        print('Please use the parameter day, week or month')
-        quit()
+run = ''
+parser = argparse.ArgumentParser(description='Determine type of backup (day/week/month)')
+parser.add_argument('--type', choices=['day', 'week', 'month'], required=True, dest=run)
+args = parser.parse_args()
 
 # Message to return result via SNS
 message = ""
