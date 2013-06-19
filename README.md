@@ -1,6 +1,6 @@
 aws-snapshot-tool
 =================
-aws-snpahost-tool is a python script to make it easy to *roll snapshot of your EBS volumes*. 
+aws-snapshot-tool is a python script to make it easy to *roll snapshot of your EBS volumes*. 
 
 Simply add a tag to each volume you want snapshots of, configure and install a cronjob for aws-snapshot-tool and you are off. It will even handle rolling snapshots on a day, week and year so that you can setup the retention policy to suit.
 
