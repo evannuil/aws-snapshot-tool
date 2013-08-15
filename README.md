@@ -26,9 +26,9 @@ Usage
 
 		# chmod +x makesnapshots.py
 		# crontab -e
-		30 3 * * 1-5 /opt/aws-snapshot-tool/makesnapshots.py day
-		30 3 * * 6 /opt/aws-snapshot-tool/makesnapshots.py week
-		30 3 1-7 * 0 /opt/aws-snapshot-tool/makesnapshots.py month
+		30 1 * * 1-5 /opt/aws-snapshot-tool/makesnapshots.py day
+		30 2 * * 6 /opt/aws-snapshot-tool/makesnapshots.py week
+		30 3 1 * * /opt/aws-snapshot-tool/makesnapshots.py month
 
 Additional Notes
 =========
