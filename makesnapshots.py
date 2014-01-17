@@ -83,20 +83,37 @@ count_total = 0
 # Connect to AWS using the credentials provided above or in Environment vars.
 if proxyHost == '':
 	# non proxy:
-	conn = EC2Connection(aws_access_key,aws_secret_key,region=region)
+
+	# using roles
+	if aws_access_key == '':
+		conn = EC2Connection(region=region)
+	else:
+		conn = EC2Connection(aws_access_key,aws_secret_key,region=region)
 else:
 	# proxy:
-	conn = EC2Connection(aws_access_key,aws_secret_key,region=region,proxy=proxyHost, proxy_port=proxyPort)
 
+	# using roles
+	if aws_access_key == '':
+		conn = EC2Connection(region=region,proxy=proxyHost, proxy_port=proxyPort)
+	else:
+		conn = EC2Connection(aws_access_key,aws_secret_key,region=region,proxy=proxyHost, proxy_port=proxyPort)
 # Connect to SNS
 if proxyHost == '':
 	# non proxy:
-	sns = boto.sns.connect_to_region(ec2_region_name,aws_access_key_id=aws_access_key,aws_secret_access_key=aws_secret_key)
+
+	# using roles
+	if aws_access_key == '':
+		sns = boto.sns.connect_to_region(ec2_region_name)
+	else:
+		sns = boto.sns.connect_to_region(ec2_region_name,aws_access_key_id=aws_access_key,aws_secret_access_key=aws_secret_key)
 else:
 	# proxy:
-	sns = boto.sns.connect_to_region(ec2_region_name,aws_access_key_id=aws_access_key,aws_secret_access_key=aws_secret_key,proxy=proxyHost, proxy_port=proxyPort)
 
-
+	# using roles
+	if aws_access_key == '':
+		sns = boto.sns.connect_to_region(ec2_region_name,proxy=proxyHost, proxy_port=proxyPort)
+	else:
+		sns = boto.sns.connect_to_region(ec2_region_name,aws_access_key_id=aws_access_key,aws_secret_access_key=aws_secret_key,proxy=proxyHost, proxy_port=proxyPort)
 vols = conn.get_all_volumes(filters={config['tag_name']: config['tag_value']})
 for vol in vols:
 	try:
