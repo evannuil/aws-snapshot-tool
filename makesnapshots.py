@@ -33,13 +33,13 @@ if (len(sys.argv) < 2):
 else:
 	if sys.argv[1]=='day':
 		run = 'day'
-		date_suffix = datetime.today().strftime('%a')
+		date_suffix = datetime.utcnow().strftime('%a')
 	elif sys.argv[1]=='week':
 		run = 'week'
-		date_suffix = datetime.today().strftime('%U')
+		date_suffix = datetime.utcnow().strftime('%U')
 	elif sys.argv[1]=='month':
 		run = 'month'
-		date_suffix = datetime.today().strftime('%b')
+		date_suffix = datetime.utcnow().strftime('%b')
 	else:
 		print('Please use the parameter day, week or month')
 		quit()
@@ -58,7 +58,7 @@ deletelist = []
 
 # Setup the logging
 logging.basicConfig(filename=config['log_file'], level=logging.INFO)
-start_message = 'Start making ' + run + ' snapshots at ' + datetime.today().strftime('%d-%m-%Y %H:%M:%S')
+start_message = 'Start making ' + run + ' snapshots at ' + datetime.utcnow().isoformat()
 message += start_message + "\n" + "\n"
 logging.info(start_message)
 
@@ -120,7 +120,7 @@ for vol in vols:
 		count_total += 1		
 		logging.info(vol)
 		print vol
-		description = run + '_snapshot ' + vol.id + '_' + run + '_' + date_suffix + ' by snapshot script at ' + datetime.today().strftime('%d-%m-%Y %H:%M:%S')
+		description = run + '_snapshot ' + vol.id + '_' + run + '_' + date_suffix + ' by snapshot script at ' + datetime.utcnow().isoformat()
 		if vol.create_snapshot(description):
 			suc_message = 'Snapshot created with description: ' + description
 			print '     ' + suc_message
@@ -173,7 +173,7 @@ for vol in vols:
 	else:
 		count_succes +=1
 
-result= '\nFinished making snapshots at ' + datetime.today().strftime('%d-%m-%Y %H:%M:%S') + ' with ' + str(count_succes) + ' snapshots of ' + str(count_total) + ' possible.'
+result= '\nFinished making snapshots at ' + datetime.utcnow().isoformat() + ' with ' + str(count_succes) + ' snapshots of ' + str(count_total) + ' possible.'
 message += "\n" + "\n" + result
 message += "\nTotal snapshots created: " + str(total_creates)
 message += "\nTotal snapshots errors: " + str(count_errors)
