@@ -2,7 +2,7 @@
 #
 # (c) 2012/2014 E.M. van Nuil / Oblivion b.v.
 #
-# makesnapshots.py version 3.2
+# makesnapshots.py version 3.3
 #
 # Changelog
 # version 1:   Initial version
@@ -18,6 +18,7 @@
 # version 3.0: Rewrote deleting functions, changed description
 # version 3.1: Fix a bug with the deletelist and added a pause in the volume loop
 # version 3.2: Tags of the volume are placed on the new snapshot
+# version 3.3: Merged IAM role addidtion from Github
 
 from boto.ec2.connection import EC2Connection
 from boto.ec2.regioninfo import RegionInfo
@@ -81,21 +82,36 @@ keep_month = config['keep_month']
 count_succes = 0
 count_total = 0
 
-# Connect to AWS using the credentials provided above or in Environment vars.
+# Connect to AWS using the credentials provided above or in Environment vars or using IAM role.
 if proxyHost == '':
 	# non proxy:
-	conn = EC2Connection(aws_access_key,aws_secret_key,region=region)
+	# using roles
+	if aws_access_key == '':
+		conn = EC2Connection(region=region)
+	else:
+		conn = EC2Connection(aws_access_key,aws_secret_key,region=region)
 else:
 	# proxy:
-	conn = EC2Connection(aws_access_key,aws_secret_key,region=region,proxy=proxyHost, proxy_port=proxyPort)
-
+	# using roles
+	if aws_access_key == '':
+		conn = EC2Connection(region=region,proxy=proxyHost, proxy_port=proxyPort)
+	else:
+		conn = EC2Connection(aws_access_key,aws_secret_key,region=region,proxy=proxyHost, proxy_port=proxyPort)
 # Connect to SNS
 if proxyHost == '':
 	# non proxy:
-	sns = boto.sns.connect_to_region(ec2_region_name,aws_access_key_id=aws_access_key,aws_secret_access_key=aws_secret_key)
+	# using roles
+	if aws_access_key == '':
+		sns = boto.sns.connect_to_region(ec2_region_name)
+	else:
+		sns = boto.sns.connect_to_region(ec2_region_name,aws_access_key_id=aws_access_key,aws_secret_access_key=aws_secret_key)
 else:
 	# proxy:
-	sns = boto.sns.connect_to_region(ec2_region_name,aws_access_key_id=aws_access_key,aws_secret_access_key=aws_secret_key,proxy=proxyHost, proxy_port=proxyPort)
+	# using roles:
+	if aws_access_key == '':
+		sns = boto.sns.connect_to_region(ec2_region_name,proxy=proxyHost, proxy_port=proxyPort)
+	else:
+		sns = boto.sns.connect_to_region(ec2_region_name,aws_access_key_id=aws_access_key,aws_secret_access_key=aws_secret_key,proxy=proxyHost, proxy_port=proxyPort)
 
 def get_resource_tags(resource_id):
 		resource_tags = {}
