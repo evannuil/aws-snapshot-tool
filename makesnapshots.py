@@ -1,8 +1,8 @@
 #!/usr/bin/python
 #
-# (c) 2012/2013 E.M. van Nuil / Oblivion b.v.
+# (c) 2012/2014 E.M. van Nuil / Oblivion b.v.
 #
-# makesnapshots.py version 3.1
+# makesnapshots.py version 3.2
 #
 # Changelog
 # version 1:   Initial version
@@ -17,6 +17,7 @@
 # version 2.0: Added daily, weekly and montly retention
 # version 3.0: Rewrote deleting functions, changed description
 # version 3.1: Fix a bug with the deletelist and added a pause in the volume loop
+# version 3.2: Tags of the volume are placed on the new snapshot
 
 from boto.ec2.connection import EC2Connection
 from boto.ec2.regioninfo import RegionInfo
@@ -96,19 +97,38 @@ else:
 	# proxy:
 	sns = boto.sns.connect_to_region(ec2_region_name,aws_access_key_id=aws_access_key,aws_secret_access_key=aws_secret_key,proxy=proxyHost, proxy_port=proxyPort)
 
+def get_resource_tags(resource_id):
+		resource_tags = {}
+		if resource_id:
+			tags = conn.get_all_tags({'resource-id': resource_id})
+			for tag in tags:
+				resource_tags[tag.name] = tag.value
+		return resource_tags
+
+def set_resource_tags(resource, tags):
+		for tag_key, tag_value in tags.iteritems():
+			if not tag_key in resource.tags or resource.tags[tag_key] != tag_value:
+				print('Tagging '+ resource.id +' with ['+ tag_key +': '+ tag_value +']')
+				resource.add_tag(tag_key, tag_value)
 
 vols = conn.get_all_volumes(filters={config['tag_name']: config['tag_value']})
 for vol in vols:
 	try:
-		count_total += 1		
+		count_total += 1
 		logging.info(vol)
-		print vol
+		tags_volume = get_resource_tags(vol.id)
 		description = run + '_snapshot ' + vol.id + '_' + run + '_' + date_suffix + ' by snapshot script at ' + datetime.today().strftime('%d-%m-%Y %H:%M:%S')
-		if vol.create_snapshot(description):
-			suc_message = 'Snapshot created with description: ' + description
+		try:
+			current_snap = vol.create_snapshot(description)
+			set_resource_tags(current_snap,tags_volume)
+			suc_message = 'Snapshot created with description: ' + str(description) + ' and tags: ' + str(tags_volume)
 			print '     ' + suc_message
 			logging.info(suc_message)
 			total_creates += 1
+		except Exception, e:
+			logging.error(e)
+			pass
+
 		snapshots = vol.snapshots()
 		deletelist = []
 		for snap in snapshots:
@@ -120,11 +140,10 @@ for vol in vols:
 			elif (sndesc.startswith('month_snapshot') and run == 'month'):
 				deletelist.append(snap)
 			else:
-				print '     Skipping, not added to deletelist: ' + sndesc
+				logging.info('     Skipping, not added to deletelist: ' + sndesc)
 		for snap in deletelist:
 			logging.info(snap)
 			logging.info(snap.start_time)
-			print '     Snapshots matching vol/run: ' + snap.description
 
 		def date_compare(snap1, snap2):
 			if snap1.start_time < snap2.start_time:
@@ -143,7 +162,6 @@ for vol in vols:
 		delta = len(deletelist) - keep
 		for i in range(delta):
 			del_message = '     Deleting snapshot ' + deletelist[i].description
-			print del_message
 			logging.info(del_message)
 			deletelist[i].delete()
 			total_deletes += 1
@@ -166,6 +184,6 @@ print result
 
 #Reporting
 if not errmsg == "":
-	sns.publish(arn,'Error in processing volumes: ' + errmsg,'Error with AWS Snapshot') 
+	sns.publish(arn,'Error in processing volumes: ' + errmsg,'Error with AWS Snapshot')
 sns.publish(arn,message,'Finished AWS snapshotting')
 logging.info(result)
