@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # (c) 2012/2014 E.M. van Nuil / Oblivion b.v.
 #
