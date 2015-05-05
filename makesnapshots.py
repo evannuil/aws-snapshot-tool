@@ -28,6 +28,7 @@ import time
 import sys
 import logging
 from config import config
+from os import environ
 
 
 if (len(sys.argv) < 2):
@@ -69,8 +70,14 @@ message += start_message + "\n\n"
 logging.info(start_message)
 
 # Get settings from config.py
-aws_access_key = config['aws_access_key']
-aws_secret_key = config['aws_secret_key']
+try:
+    # Try to load user-specified access keys from environment variables
+    aws_access_key = environ['AWS_ACCESS_KEY_ID']
+    aws_secret_key = environ['AWS_SECRET_ACCESS_KEY']
+except:
+    # Or from the config file (if ENV don't exist)
+    aws_access_key = config['aws_access_key']
+    aws_secret_key = config['aws_secret_key']
 ec2_region_name = config['ec2_region_name']
 ec2_region_endpoint = config['ec2_region_endpoint']
 sns_arn = config.get('arn')

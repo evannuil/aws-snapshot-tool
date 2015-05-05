@@ -15,7 +15,7 @@ Usage
 1. Install and configure Python and Boto (See: https://github.com/boto/boto)
 2. Create a SNS topic in AWS and copy the ARN into the config file
 3. Subscribe with a email address to the SNS topic
-4. Create a snapshot user in IAM and put the key and secret in the config file
+4. Create a snapshot user in IAM and put the key and secret in the config file (or set them as [environment variables](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment))
 5. Create a security policy for this user (see the iam.policy.sample)
 6. Copy config.sample to config.py
 7. Decide how many versions of the snapshots you want for day/week/month and change this in config.py
