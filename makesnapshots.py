@@ -22,7 +22,9 @@
 
 from boto.ec2.connection import EC2Connection
 from boto.ec2.regioninfo import RegionInfo
+import boto.ec2
 import boto.sns
+import boto3
 from datetime import datetime
 import time
 import sys
@@ -53,6 +55,7 @@ errmsg = ""
 
 # Counters
 total_creates = 0
+total_copies = 0
 total_deletes = 0
 count_errors = 0
 
@@ -76,6 +79,7 @@ ec2_region_endpoint = config['ec2_region_endpoint']
 sns_arn = config.get('arn')
 proxyHost = config.get('proxyHost')
 proxyPort = config.get('proxyPort')
+copy_tag = config.get('copy_tag_name')
 
 region = RegionInfo(name=ec2_region_name, endpoint=ec2_region_endpoint)
 
@@ -168,6 +172,29 @@ for vol in vols:
             logging.error(e)
             pass
 
+        # Copy snapshot to another region based on the tag specified
+        if copy_tag and copy_tag in vol.tags:
+            try:
+                # We need to wait until the snapshot is complete before shipping them
+                while True:
+                    if current_snap.status == 'completed':
+                        break
+                    time.sleep(5)
+                    current_snap.update(validate=True)
+                    print current_snap.status
+                copy_to_region = vol.tags[copy_tag]
+                dest_session = boto3.session.Session(aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key, region_name=copy_to_region)
+                dest_conn = dest_session.client('ec2')
+                copied_snap = dest_conn.copy_snapshot(SourceRegion=ec2_region_name, SourceSnapshotId=current_snap.id,
+                        Description='Copy of: %s' % description)
+                dest_conn.create_tags(Resources=[copied_snap['SnapshotId']], Tags=[{'Key': 'source_snapshot_id', 'Value': current_snap.id}])
+                total_copies += 1
+            except Exception, e:
+                print "Unexpected error:", sys.exc_info()[0]
+                logging.error(e)
+                count_errors += 1
+                pass
+
         snapshots = vol.snapshots()
         deletelist = []
         for snap in snapshots:
@@ -204,6 +231,20 @@ for vol in vols:
             del_message = '     Deleting snapshot ' + deletelist[i].description
             logging.info(del_message)
             deletelist[i].delete()
+            if dest_conn:
+                logging.info('     Deleting snapshots copies sourced from the original snapshot: ' + deletelist[i].id)
+                copied_vols = dest_conn.describe_snapshots(
+                    OwnerIds=['self'],
+                    Filters = [
+                        {
+                            'Name': 'tag:source_snapshot_id',
+                            'Values': [deletelist[i].id]
+                        },
+                    ]
+                )
+                for copied_vol in copied_vols['Snapshots']:
+                    logging.info('     Deleting copied snapshot: ' + copied_vol['SnapshotId'])
+                    dest_conn.delete_snapshot(SnapshotId=copied_vol['SnapshotId'])
             total_deletes += 1
         time.sleep(3)
     except:
@@ -222,6 +263,7 @@ result = '\nFinished making snapshots at %(date)s with %(count_success)s snapsho
 
 message += result
 message += "\nTotal snapshots created: " + str(total_creates)
+message += "\nTotal snapshots copied: " + str(total_copies)
 message += "\nTotal snapshots errors: " + str(count_errors)
 message += "\nTotal snapshots deleted: " + str(total_deletes) + "\n"
 
