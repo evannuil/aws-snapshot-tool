@@ -31,4 +31,5 @@ pip-log.txt
 /iam.policy
 
 # Virtualenv
-.env*
+.autoenv*
+.venv
