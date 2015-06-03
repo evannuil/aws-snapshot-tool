@@ -137,7 +137,7 @@ def create_snapshot():
     description = "AUTOSNAP: {0} ({1}) at {2}".format(
         instance_name,
         volume.attach_data.device,
-        datetime.today().strftime('%d-%m-%Y %H:%M:%S'))
+        datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
     # Create snapshot (and store the ID)
     snapshot = volume.create_snapshot(description)
     # Add some tags to the snapshot for identification
