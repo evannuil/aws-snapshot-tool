@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 #
-# (c) 2012/2014 E.M. van Nuil / Oblivion b.v.
-# Update 2015 by Zach Himsel
+# (c) 2015 by Zach Himsel
 
 # Load our dependent libraries
 from boto.ec2.connection import EC2Connection
