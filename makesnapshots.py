@@ -142,8 +142,24 @@ def set_resource_tags(resource, tags):
             resource.add_tag(tag_key, tag_value)
 
 # Get all the volumes that match the tag criteria
-print 'Finding volumes that match the requested tag ({ "tag:%(tag_name)s": "%(tag_value)s" })' % config
-vols = conn.get_all_volumes(filters={ 'tag:' + config['tag_name']: config['tag_value'] })
+tag_type = config.get('tag_type', 'volume')
+if tag_type == 'volume':
+    print 'Finding volumes that match the requested tag ({ "tag:%(tag_name)s": "%(tag_value)s" })' % config
+    vols = conn.get_all_volumes(filters={ 'tag:' + config['tag_name']: config['tag_value'] })
+elif tag_type == 'instance':
+    print 'Finding volumes attached to running instances that match the requested tag ({ "tag:%(tag_name)s": "%(tag_value)s" })' % config
+    reservations = conn.get_all_instances(filters={
+        'instance-state-name': 'running',
+        'tag:' + config['tag_name']: config['tag_value']})
+    volume_ids = []
+    for r in reservations:
+        for i in r.instances:
+            for bdt in i.block_device_mapping.itervalues():
+                volume_ids.append(bdt.volume_id)
+    vols = conn.get_all_volumes(volume_ids=volume_ids)
+else:
+    print "tag_type should either be 'volume' or 'instance'."
+    quit()
 
 for vol in vols:
     try:
