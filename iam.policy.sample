@@ -17,6 +17,7 @@
 		"ec2:CreateTags",
 		"ec2:DeleteSnapshot",
 		"ec2:DescribeAvailabilityZones",
+		"ec2:DescribeInstances",
 		"ec2:DescribeSnapshots",
 		"ec2:DescribeTags",
 		"ec2:DescribeVolumeAttribute",

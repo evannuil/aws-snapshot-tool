@@ -65,7 +65,6 @@ start_message = 'Started taking %(period)s snapshots at %(date)s' % {
     'period': period,
     'date': datetime.today().strftime('%d-%m-%Y %H:%M:%S')
 }
-message += start_message + "\n\n"
 logging.info(start_message)
 
 # Get settings from config.py
@@ -142,8 +141,29 @@ def set_resource_tags(resource, tags):
             resource.add_tag(tag_key, tag_value)
 
 # Get all the volumes that match the tag criteria
-print 'Finding volumes that match the requested tag ({ "tag:%(tag_name)s": "%(tag_value)s" })' % config
-vols = conn.get_all_volumes(filters={ 'tag:' + config['tag_name']: config['tag_value'] })
+instance_names = []
+tag_type = config.get('tag_type', 'volume')
+if tag_type == 'volume':
+    print 'Finding volumes that match the requested tag ({ "tag:%(tag_name)s": "%(tag_value)s" })' % config
+    vols = conn.get_all_volumes(filters={ 'tag:' + config['tag_name']: config['tag_value'] })
+elif tag_type == 'instance':
+    print 'Finding volumes attached to running instances that match the requested tag ({ "tag:%(tag_name)s": "%(tag_value)s" })' % config
+    reservations = conn.get_all_instances(filters={
+        'instance-state-name': 'running',
+        'tag:' + config['tag_name']: config['tag_value']})
+    volume_ids = []
+    for r in reservations:
+        for i in r.instances:
+            for bdt in i.block_device_mapping.itervalues():
+                volume_ids.append(bdt.volume_id)
+                if 'Name' in i.tags:
+                    instance_names.append(i.tags['Name'] + " - " + bdt.volume_id)
+                else:
+                    instance_names.append(i.id + " - " + bdt.volume_id)
+    vols = conn.get_all_volumes(volume_ids=volume_ids)
+else:
+    print "tag_type should either be 'volume' or 'instance'."
+    quit()
 
 for vol in vols:
     try:
@@ -219,6 +239,10 @@ result = '\nFinished making snapshots at %(date)s with %(count_success)s snapsho
     'count_success': count_success,
     'count_total': count_total
 }
+message += start_message + "\n\n"
+message += "These are the instances and their volumes:\n"
+for instance_name in instance_names:
+    message += instance_name + "\n"
 
 message += result
 message += "\nTotal snapshots created: " + str(total_creates)
