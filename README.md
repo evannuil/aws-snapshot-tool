@@ -2,13 +2,13 @@ aws-snapshot-tool
 =================
 aws-snapshot-tool is a python script to make it easy to *roll snapshot of your EBS volumes*. 
 
-Simply add a tag to each volume you want snapshots of, configure and install a cronjob for aws-snapshot-tool and you are off. It will even handle rolling snapshots on a day, week and year so that you can setup the retention policy to suit.
+Simply add a tag to each volume you want snapshots of, configure and install a cronjob for aws-snapshot-tool and you are off. It will even handle rolling snapshots on an hour, day, week and year so that you can set up a suitable retention policy.
 
 Features:
 - *Python based*: Leverages boto and is easy to configure and install as a crontab
 - *Simple tag system*: Just add a tag to each of your EBS volumes you want snapshots of
-- *Configure retention policy*: Configure how many days, weeks, and month snapshots you want to retain
-- *SNS Notifications*: aws-snapshot-tool works with Amazon SNS our of the box, so you can be notified of snapshots
+- *Configure retention policy*: Configure how many hours, days, weeks, and months snapshots you want to retain
+- *SNS Notifications*: aws-snapshot-tool works with Amazon SNS out of the box, so you can be notified of snapshots
 
 Usage
 ==========
