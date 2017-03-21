@@ -1,0 +1,3 @@
+#!/bin/sh
+
+/aws-snapshot-tool/makesnapshots.py week

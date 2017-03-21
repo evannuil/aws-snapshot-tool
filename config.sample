@@ -1,8 +1,10 @@
+import os
+
 config = {
 
     # AWS credentials for the IAM user (alternatively can be set up as environment variables)
-    'aws_access_key': 'xxxxxxxx',
-    'aws_secret_key': 'xxxxxxxxxxxx',
+    'aws_access_key': os.environ.get('AWS_ACCESS_KEY'),
+    'aws_secret_key': os.environ.get('AWS_SECRET_KEY'),
 
     # EC2 info about your server's region
     'ec2_region_name': 'eu-west-1',

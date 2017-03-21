@@ -1,6 +1,6 @@
 aws-snapshot-tool
 =================
-aws-snapshot-tool is a python script to make it easy to *roll snapshot of your EBS volumes*. 
+aws-snapshot-tool is a python script to make it easy to *roll snapshot of your EBS volumes*.
 
 Simply add a tag to each volume you want snapshots of, configure and install a cronjob for aws-snapshot-tool and you are off. It will even handle rolling snapshots on a day, week and year so that you can setup the retention policy to suit.
 
@@ -22,7 +22,7 @@ Usage
 8. Change the Region and Endpoint for AWS in the config.py file
 9. Optionally specify a proxy if you need to, otherwise set it to '' in the config.py
 10. Give every Volume for which you want snapshots a Tag with a Key and a Value and put these in the config file. Default: "MakeSnapshot" and the value "True"
-11. Install the script in the cron: 
+11. Install the script in the cron:
 
 		# chmod +x makesnapshots.py
 		# crontab -e
@@ -33,3 +33,19 @@ Usage
 Additional Notes
 =========
 The user that executes the script needs the following policies: see iam.policy.sample
+
+Docker
+=========
+To run in Docker, you must build a new image and pass in your AWS keys as build args. Before building the image, you must go through steps 1-10 above. Instead of doing step 11, you should modify the Dockerfile to register the correct cronjobs. This entails copying `bin/snapshot-<timeframe>` to `/etc/periodic/<timeframe>` within the Dockerfile. Crons can be added to:
+
+```
+	/etc/periodic/15min
+	/etc/periodic/hourly
+	/etc/periodic/daily
+	/etc/periodic/weekly
+	/etc/periodic/monthly
+```
+
+ An example build command is below (but you might want to change the image tag):
+
+```docker build -t aws-snapshot-tool:1 --build-arg aws_access_key=<AWS_ACCESS_KEY> --build-arg aws_secret_key=<AWS_SECRET_KEY> .```
