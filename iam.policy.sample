@@ -1,7 +1,7 @@
 {
+  "Version": "2012-10-17",
   "Statement": [
 	{
-	  "Sid": "Stmtxxxxxxxxxx",
 	  "Action": [
 		"sns:Publish"
 	  ],
@@ -11,7 +11,6 @@
 	  ]
 	},
 	{
-	  "Sid": "Stmtxxxxxxxxxxxxxx",
 	  "Action": [
 		"ec2:CreateSnapshot",
 		"ec2:CreateTags",
